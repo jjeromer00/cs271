@@ -42,11 +42,25 @@ CHIP ALU {
         ng; // 1 if (out < 0),  0 otherwise
 
     PARTS:
-   Mux16(a = x, b[0..15] = 0, sel = zx, out = zxOut);
-   Not16(in = zxOut, out = xZero);
+   Mux16(a = x, b = false, sel = zx, out = zxOut);  // Zero X
+   Not16(in = zxOut, out = xZero);                  // Negate X
    Mux16(a = zxOut, b = xZero, sel = nx, out = xOut);
-   Mux16(a = y, b[0..15] = 0, sel = zy, out = zyOut);
-   Not16(in = zyOut, out =yZero);
-   Mux16(a = zyOut, b = yZero, sel = ny, out = yOut); //Both X and Y are able to be set to 1 and 0
 
+   Mux16(a = y, b = false, sel = zy, out = zyOut);  // Zero Y
+   Not16(in = zyOut, out =yZero);                   // Negate Y
+                                                    //Both X and Y are able to be set to 1 and 0
+   Mux16(a = zyOut, b = yZero, sel = ny, out = yOut);
+
+   Add16(a = xOut, b = yOut, out = xyAdd);          // f input options
+   And16(a = xOut, b = yOut, out = xyAnd);
+   Mux16(a = xyAnd, b = xyAdd, sel = f, out = fxy); // Choses an output + or &
+
+   Not16(in = fxy, out = noxy);                     //Negate output
+   Mux16(a = fxy, b = noxy, sel = no, out[15] = ng, out[0..7] = zr7, out[8..15] = zr15, out = out);
+
+   Or8Way(in = zr7, out = zr1);
+   Or8Way(in = zr15, out = zr2);
+   Or(a = zr1, b = zr2, out = zrOr);
+   Not(in = zrOr, out = zr);
+   
 }
